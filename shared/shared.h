@@ -19,7 +19,7 @@ typedef struct _Headers {
     int length;
 } Headers;
 Headers* createHeaders();
-char* getHeader(Headers *headers, char *key);
+char * getHeader(Headers *headers, char *key);
 int setHeader(Headers *headers, char *key, char *value);
 
 typedef struct _Request {
@@ -39,5 +39,6 @@ typedef struct _Response {
 } Response;
 char *responseToString(Response *res);
 Response* responseFromString(char* string);
+Request *requestFromString(char *str);
 
 #endif

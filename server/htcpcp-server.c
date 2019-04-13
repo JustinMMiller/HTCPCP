@@ -90,7 +90,8 @@ typedef struct _HandleRequestArgs
 // It then handles the callback to the server program.
 void *handleRequest(void *args)
 {
-	//Request *req = g
+	HandleRequestArgs *a = (HandleRequestArgs *)args;
+	Request *req = requestFromString(a->buffer);
 }
 
 void *runServer(void *server)

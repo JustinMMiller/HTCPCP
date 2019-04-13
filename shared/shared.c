@@ -38,7 +38,7 @@ int setHeader(Headers *headers, char *_key, char *_value){
     return headers->length;
 }
 
-char* getHeader(Headers *headers, char *key){
+char * getHeader(Headers *headers, char *key){
     for(int i = 0; i < headers->length; i++){
         if(!strcmp(headers->key[i], key)){
             return headers->value[i];
@@ -56,7 +56,7 @@ void populateHeadersFromString(Headers *headers, char *str)
 		char *key = strtok(NULL, ": ");
 		char *value = strtok(NULL, "\r\n");
 		setHeader(headers, key, value);
-		token = strtok(NULL, "\r\n";
+		token = strtok(NULL, "\r\n");
 	}
 }
 
@@ -71,18 +71,18 @@ char* requestToString(Request *req){
     return string;
 }
 
-Request *requestFromString(char *str, int len)
+Request *requestFromString(char *str)
 {
 	Request *ret  = malloc(sizeof(Request));
 	char *token = strtok(str, " ");
-	ret->method atoi(token);
+	ret->method  = atoi(token);
 	char *troute = strtok(NULL, " ");
 	ret->route = malloc(strlen(troute)+1);
 	memcpy(ret->route, troute, strlen(troute));
-	ret->headers = getHeader();
+	ret->headers = createHeaders();
 	strtok(NULL, "\r\n");
 	char *headerstart = strtok(NULL, "\r\n");
-	populateHeadersFromString(str->headers, headerstart);
+	populateHeadersFromString(ret->headers, headerstart);
 	ret->bodyLength = atoi(getHeader(ret->headers, "Content-Length"));
 	ret->body = malloc(ret->bodyLength+1);
 	memcpy(ret->body, strtok(NULL, "\r\n\r\n"), ret->bodyLength);
@@ -91,6 +91,7 @@ Request *requestFromString(char *str, int len)
 
 char *responseToString(Response *res)
 {
+}
 Response* responseFromString(char* string){
     char str[strlen(string)+1];
     strcpy(str, string);
