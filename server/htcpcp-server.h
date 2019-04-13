@@ -1,7 +1,7 @@
 #ifndef HTCPCP_SERVER_H
 #define HTCPCP_SERVER_H
 
-#include "../utils.h"
+#include "../shared/shared.h"
 #include <pthread.h>
 #include <semaphore.h>
 

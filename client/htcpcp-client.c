@@ -125,11 +125,5 @@ int main(){
     Response *res = get("coffee://127.0.0.1/brew", NULL);
     printf("%s\n", responseToString(res));
 
-    // Headers *h = createHeaders();
-    // setHeader(h, "Content-Type", "Application/json");
-
-    // char *body = "{\"hello\": \"world\"}";
-    // post("coffee://127.0.0.1/brewitupboiii", h, body, strlen(body));
-
     return 0;
 }

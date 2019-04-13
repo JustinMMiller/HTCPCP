@@ -92,6 +92,18 @@ void *handleRequest(void *args)
 {
 	HandleRequestArgs *a = (HandleRequestArgs *)args;
 	Request *req = requestFromString(a->buffer);
+	printf("%s\n", requestToString(req));
+	int callbackIndex = getCallbackIndex(a->server, req->method, req->route);
+	if(callbackIndex < 0)
+	{
+		printf("Unable to find a callback for route %s\n", req->route);
+		return NULL;
+	}
+	pthread_mutex_lock(&(a->server->lock));
+	Response *res = (*(a->server->callbacks[callbackIndex]))(req);
+	pthread_mutex_unlock(&(a->server->lock));
+	char *str = responseToString(res);
+	send(a->new_socket, str, strlen(str), 0);
 }
 
 void *runServer(void *server)
@@ -145,6 +157,22 @@ void startServer(HTCPCPServer *server)
 	pthread_mutex_unlock(&(server->lock));
 }
 
+Response * myCallback(Request *req)
+{
+	Response *res = malloc(sizeof(Response));
+	res->status = STATUS_OK;
+	res->headers = createHeaders();
+	setHeader(res->headers, "Safe", "yes");
+	res->body = malloc(20);
+	strcpy(res->body, "Hello World\0");
+	res->bodyLength = strlen(res->body+1);
+	return res;
+}
+
 int main()
 {
+	HTCPCPServer *server = getServer();
+	addRoute(server, METHOD_POST, "/brew", myCallback);
+	startServer(server);
+	while(1){}
 }
