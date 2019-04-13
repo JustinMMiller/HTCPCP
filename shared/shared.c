@@ -91,7 +91,9 @@ Request *requestFromString(char *str)
 
 char *responseToString(Response *res)
 {
+	char *res = malloc(4096);
 }
+
 Response* responseFromString(char* string){
     char str[strlen(string)+1];
     strcpy(str, string);
