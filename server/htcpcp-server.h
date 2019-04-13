@@ -1,4 +1,35 @@
 #ifndef HTCPCP_SERVER_H
 #define HTCPCP_SERVER_H
 
+#include "../utils.h"
+#include <pthread.h>
+
+typedef Response * callbackFunc(Request*);
+
+typedef struct _HTCPCPServer
+{
+	// The following 3 arrays are kept in lockstep such that index
+	// i from each array forms the total information of the ith callback.
+	// Yes, callbacks is an array of function pointers. I'm looking forward to it.
+	char **callbackURLs;
+	int *callbackMethods;
+	callbackFunc **callbacks;
+	int numCallbacks;
+	int maxCallbacks;
+	pthread_t mainThread;
+	pthread_t *children;
+	int numChildren;
+	pthread_mutex_t lock;
+} HTCPCPServer;
+
+// Public functions
+void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback);
+HTCPCPServer *getServer();
+void startServer(HTCPCPServer *server);
+void stopServer(HTCPCPServer *server);
+
+// Internal functions
+void runServer(); 	// Thread function.
+int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL);
+
 #endif
