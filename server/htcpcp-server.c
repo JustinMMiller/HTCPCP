@@ -112,11 +112,18 @@ void *runServer(void *server)
 	int server_fd, new_socket, valread;
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
+	int opt = 1;
 	char *buffer = calloc(BUFFER_SIZE,sizeof(char));
 	if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	{
 		printf("Socket failed\n");
 		return NULL;
+	}
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+				&opt, sizeof(opt)))
+	{
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
 	}
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
@@ -126,6 +133,7 @@ void *runServer(void *server)
 		printf("Binding socket failed\n");
 		return NULL;
 	}
+	printf("Socket bound on port %i\n", PORT);
 	while(1)
 	{
 		if(listen(server_fd, MAX_THREADS_HTCPCP_SERVER) < 0)
@@ -174,5 +182,5 @@ int main()
 	HTCPCPServer *server = getServer();
 	addRoute(server, METHOD_POST, "/brew", myCallback);
 	startServer(server);
-	while(1){}
+	while(1){sleep(1);printf("Yawn\n");}
 }
