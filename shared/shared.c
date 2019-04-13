@@ -52,16 +52,13 @@ char * getHeader(Headers *headers, char *key){
 // When passed in the string of headers, it will populate the Headers struct.
 void populateHeadersFromString(Headers *headers, char *str)
 {
-	char *token = strtok(str, ":\n");
-	//printf("%s\n", token);
-	while(token != NULL)
-	{
-		//printf("%s\n", token);
-		char *key = token;
-		char *value = strtok(NULL, ":\n");
-		//printf("%s, %s\n", key, value);
+	char *key = strtok(NULL, ": ");
+	char *value = strtok(NULL, "\n");
+	while(key != NULL){
+		// printf("%s: %s\n", key, value);
 		setHeader(headers, key, value);
-		token = strtok(NULL, ":\n");
+		key = strtok(NULL, ": ");
+		value = strtok(NULL, "\n");
 	}
 }
 
@@ -76,8 +73,11 @@ char* requestToString(Request *req){
 	return string;
 }
 
-Request *requestFromString(char *str)
+Request *requestFromString(char *_str)
 {
+    char str[strlen(_str)+1];
+    strcpy(str, _str);
+
 	Request *ret  = malloc(sizeof(Request));
 	char *token = strtok(str, " ");
 	ret->method  = atoi(token);

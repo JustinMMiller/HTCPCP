@@ -117,7 +117,7 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
 }
 
 int main(){
-    Response *res = get("coffee://127.0.0.1/", NULL);
+    Response *res = get("coffee://127.0.0.1/brew", NULL);
     printf(res);
     printf("%s\n", responseToString(res));
 
