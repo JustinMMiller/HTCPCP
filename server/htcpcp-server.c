@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <regex.h>
+#include <unistd.h>
+#include <stdio.h>
 
 
 #define MAX_THREADS_HTCPCP_SERVER 32
@@ -75,6 +77,22 @@ int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL)
 	return -1;
 }
 
+typedef struct _HandleRequestArgs
+{
+	char *buffer;
+	int len;
+	HTCPCPServer *server;
+	int new_socket;
+} HandleRequestArgs;
+
+// This function is for threads created in runServer. 
+// It takes in a pointer to a HandleRequestArgs struct.
+// It then handles the callback to the server program.
+void *handleRequest(void *args)
+{
+	//Request *req = g
+}
+
 void *runServer(void *server)
 {
 	HTCPCPServer *s = (HTCPCPServer *)server;
@@ -108,7 +126,14 @@ void *runServer(void *server)
 			return NULL;
 		}
 		valread = read(new_socket, buffer, BUFFER_SIZE);
-
+		HandleRequestArgs *args = malloc(sizeof(HandleRequestArgs));
+		args->buffer = calloc(valread+1, sizeof(char));
+		memcpy(args->buffer, buffer, valread);
+		args->len = valread;
+		args->server = s;
+		args->new_socket = new_socket;
+		pthread_t *handler = malloc(sizeof(pthread_t));
+		pthread_create(handler, NULL, handleRequest, args);
 	}
 }
 
