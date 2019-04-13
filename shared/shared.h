@@ -37,6 +37,7 @@ typedef struct _Response {
     char *body;
     int bodyLength;
 } Response;
+char *responseToString(Response *res);
 Response* responseFromString(char* string);
 
 #endif

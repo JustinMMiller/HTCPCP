@@ -30,7 +30,7 @@ void stopServer(HTCPCPServer *server);
 
 // Internal functions
 void *runServer(void *server); 	// Main thread function.
-void handleRequest(char *buffer, int len);
+void *handleRequest(void *args);
 int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL);
 
 #endif
