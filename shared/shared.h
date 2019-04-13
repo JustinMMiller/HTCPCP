@@ -25,7 +25,7 @@ int setHeader(Headers *headers, char *key, char *value);
 typedef struct _Request {
     int method;
     char* route;
-    Headers headers;
+    Headers *headers;
     char *body;
     int bodyLength;
 } Request;
@@ -33,9 +33,11 @@ char* requestToString(Request *req);
 
 typedef struct _Response {
     int status;
+    Headers *headers;
     char *body;
     int bodyLength;
 } Response;
 char *responseToString(Response *res);
+Response* responseFromString(char* string);
 
 #endif

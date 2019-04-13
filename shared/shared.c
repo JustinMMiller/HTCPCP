@@ -13,7 +13,11 @@ Headers* createHeaders(){
     return h;
 }
 
-int setHeader(Headers *headers, char *key, char *value){
+int setHeader(Headers *headers, char *_key, char *_value){
+    // Malloc a place for key and value since they'll be sticking around a while
+    char *key = malloc(strlen(_key)+1); strcpy(key, _key);
+    char *value = malloc(strlen(_value)+1); strcpy(value, _value);
+
     // Check if the key already exists, if it does then update it
     for(int i = 0; i < headers->length; i++){
         if(!strcmp(headers->key[i], key)){
@@ -59,9 +63,9 @@ void populateHeadersFromString(Headers *headers, char *str)
 char* requestToString(Request *req){
     char* string = malloc(sizeof(char)*(14+3+strlen(req->route)));
     sprintf(string, "%i %s HTCPCP/1.0\n", req->method, req->route);
-    for(int i = 0; i < req->headers.length; i++){
-        char *buf = malloc(sizeof(char)*(4+strlen(req->headers.key[i])+strlen(req->headers.value[i])));
-        sprintf(buf, "%s: %s\n", req->headers.key[i], req->headers.value[i]);
+    for(int i = 0; i < req->headers->length; i++){
+        char *buf = malloc(sizeof(char)*(4+strlen(req->headers->key[i])+strlen(req->headers->value[i])));
+        sprintf(buf, "%s: %s\n", req->headers->key[i], req->headers->value[i]);
         strcat(string, buf);
     }
     return string;
@@ -87,4 +91,27 @@ Request *requestFromString(char *str, int len)
 
 char *responseToString(Response *res)
 {
+Response* responseFromString(char* string){
+    char str[strlen(string)+1];
+    strcpy(str, string);
+    // Init response object
+    Response *res = malloc(sizeof(Response));
+
+    // Parse out status code
+    strtok(str, " ");
+    res->status = atoi(strtok(NULL, " "));
+    strtok(NULL, "\n");
+    printf("%i\n", res->status);
+    // Rest of lines should contain one header each
+    res->headers = createHeaders();
+    char *key = strtok(NULL, ": ");
+    char *value = strtok(NULL, "\n");
+    while(key != NULL){
+        // printf("%s: %s\n", key, value);
+        setHeader(res->headers, key, value);
+        printf("%s: %s\n", res->headers->key[res->headers->length-1], res->headers->value[res->headers->length-1]);
+        key = strtok(NULL, ": ");
+        value = strtok(NULL, "\n");
+    }
+    return res;
 }
