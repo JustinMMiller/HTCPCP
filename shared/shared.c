@@ -1,19 +1,10 @@
-#define STATUS_OK               200
-#define STATUS_NOT_ACCEPTABLE   406
-#define STATUS_TEAPOT           418
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define METHOD_GET              1
-#define METHOD_POST             2
-#define METHOD_BREW             4
-#define METHOD_PROPFIND         8
-#define METHOD_WHEN             16
+#include "shared.h"
 
 
-typedef struct _Headers {
-    char **key;
-    char **value;
-    int length;
-} Headers;
 Headers* createHeaders(){
     Headers *h = malloc(sizeof(Headers));
     h->key = malloc(sizeof(char*)*10);
@@ -21,11 +12,11 @@ Headers* createHeaders(){
     h->length = 0;
     return h;
 }
+
 int setHeader(Headers *headers, char *key, char *value){
     // Check if the key already exists, if it does then update it
     for(int i = 0; i < headers->length; i++){
         if(!strcmp(headers->key[i], key)){
-            printf("HESOIGBDNJK\n");
             headers->value[i] = value;
             return headers->length;
         }
@@ -42,6 +33,7 @@ int setHeader(Headers *headers, char *key, char *value){
     headers->length = headers->length + 1;
     return headers->length;
 }
+
 char* getHeader(Headers *headers, char *key){
     for(int i = 0; i < headers->length; i++){
         if(!strcmp(headers->key[i], key)){
@@ -51,13 +43,6 @@ char* getHeader(Headers *headers, char *key){
     return NULL;
 }
 
-typedef struct _Request {
-    int method;
-    char* route;
-    Headers headers;
-    char *body;
-    int bodyLength;
-} Request;
 char* requestToString(Request *req){
     char* string = malloc(sizeof(char)*(14+3+strlen(req->route)));
     sprintf(string, "%i %s HTCPCP/1.0\n", req->method, req->route);
@@ -68,9 +53,3 @@ char* requestToString(Request *req){
     }
     return string;
 }
-
-typedef struct _Response {
-    int status;
-    char *body;
-    int bodyLength;
-} Response;
