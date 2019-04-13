@@ -2,6 +2,16 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <regex.h>
+
+
+#define MAX_THREADS_HTCPCP_SERVER 32
+#define PORT 489
+#define BUFFER_SIZE 4096
 
 HTCPCPServer *getServer()
 {
@@ -63,6 +73,50 @@ int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL)
 		}
 	}
 	return -1;
+}
+
+void *runServer(void *server)
+{
+	HTCPCPServer *s = (HTCPCPServer *)server;
+	int server_fd, new_socket, valread;
+	struct sockaddr_in address;
+	int addrlen = sizeof(address);
+	char *buffer = calloc(BUFFER_SIZE,sizeof(char));
+	if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	{
+		printf("Socket failed\n");
+		return NULL;
+	}
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(PORT);
+	if(bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
+	{
+		printf("Binding socket failed\n");
+		return NULL;
+	}
+	while(1)
+	{
+		if(listen(server_fd, MAX_THREADS_HTCPCP_SERVER) < 0)
+		{
+			printf("Error while listening\n");
+			return NULL;
+		}
+		if((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) 
+		{
+			printf("Error while accepting connection\n");
+			return NULL;
+		}
+		valread = read(new_socket, buffer, BUFFER_SIZE);
+
+	}
+}
+
+void startServer(HTCPCPServer *server)
+{
+	pthread_mutex_lock(&(server->lock));
+	pthread_create(&(server->mainThread), NULL, runServer, server);
+	pthread_mutex_unlock(&(server->lock));
 }
 
 int main()

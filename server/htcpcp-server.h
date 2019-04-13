@@ -3,6 +3,7 @@
 
 #include "../utils.h"
 #include <pthread.h>
+#include <semaphore.h>
 
 typedef Response * callbackFunc(Request*);
 
@@ -17,8 +18,7 @@ typedef struct _HTCPCPServer
 	int numCallbacks;
 	int maxCallbacks;
 	pthread_t mainThread;
-	pthread_t *children;
-	int numChildren;
+	sem_t children;
 	pthread_mutex_t lock;
 } HTCPCPServer;
 
@@ -29,7 +29,8 @@ void startServer(HTCPCPServer *server);
 void stopServer(HTCPCPServer *server);
 
 // Internal functions
-void runServer(); 	// Thread function.
+void *runServer(void *server); 	// Main thread function.
+void handleRequest(char *buffer, int len);
 int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL);
 
 #endif
