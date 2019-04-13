@@ -172,7 +172,7 @@ Response * myCallback(Request *req)
 int main()
 {
 	HTCPCPServer *server = getServer();
-	addRoute(server, METHOD_POST, "/", myCallback);
+	addRoute(server, METHOD_POST, "/brew", myCallback);
 	startServer(server);
 	while(1){}
 }
