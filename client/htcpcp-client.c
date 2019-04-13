@@ -36,6 +36,7 @@ Response* sendRequest(Request *req){
     }
     
     char *payload = requestToString(req);
+    printf("%s\n", payload);
     char *buf[1024] = {0};
     send(sock, payload, strlen(payload), 0);
     printf("Request sent\n");
@@ -80,6 +81,7 @@ Response* get(char *url, Headers *headers){
     if(headers == NULL)
         headers = createHeaders();
     setHeader(headers, "HOST", host);
+    setHeader(headers, "Content-Length", "0");
 
     Request req = {
         .method = METHOD_GET,
@@ -115,7 +117,8 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
 }
 
 int main(){
-    Response *res = post("coffee://127.0.0.1/", NULL, "hello", 6);
+    Response *res = get("coffee://127.0.0.1/", NULL);
+    printf(res);
     printf("%s\n", responseToString(res));
 
     return 0;

@@ -180,7 +180,7 @@ Response * myCallback(Request *req)
 int main()
 {
 	HTCPCPServer *server = getServer();
-	addRoute(server, METHOD_POST, "/brew", myCallback);
+	addRoute(server, METHOD_GET, "/brew", myCallback);
 	startServer(server);
 	while(1){sleep(1);printf("Yawn\n");}
 }
