@@ -95,7 +95,7 @@ int main(){
     // };
     // printf("%s\n", requestToString(&req));
 
-    get("coffee://127.0.0.1/fuck/hello", NULL);
+    get("coffee://127.0.0.1/", NULL);
 
     return 0;
 }
