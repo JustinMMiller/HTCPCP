@@ -15,8 +15,10 @@ Headers* createHeaders(){
 
 int setHeader(Headers *headers, char *_key, char *_value){
 	// Malloc a place for key and value since they'll be sticking around a while
-	char *key = malloc(strlen(_key)+1); strcpy(key, _key);
-	char *value = malloc(strlen(_value)+1); strcpy(value, _value);
+	char *key = malloc(strlen(_key)+1); 
+	strcpy(key, _key);
+	char *value = malloc(strlen(_value)+1); 
+	strcpy(value, _value);
 
 	// Check if the key already exists, if it does then update it
 	for(int i = 0; i < headers->length; i++){
@@ -50,13 +52,16 @@ char * getHeader(Headers *headers, char *key){
 // When passed in the string of headers, it will populate the Headers struct.
 void populateHeadersFromString(Headers *headers, char *str)
 {
-	char *token = strtok(str, "\r\n");
+	char *token = strtok(str, ":\n");
+	//printf("%s\n", token);
 	while(token != NULL)
 	{
-		char *key = strtok(NULL, ": ");
-		char *value = strtok(NULL, "\r\n");
+		//printf("%s\n", token);
+		char *key = token;
+		char *value = strtok(NULL, ":\n");
+		//printf("%s, %s\n", key, value);
 		setHeader(headers, key, value);
-		token = strtok(NULL, "\r\n");
+		token = strtok(NULL, ":\n");
 	}
 }
 

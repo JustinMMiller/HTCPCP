@@ -66,7 +66,7 @@ void getURLParts(char *_url, char **dest_host, char **dest_route){
         *dest_route = route;
     }
     else{
-        *dest_route = "";
+        *dest_route = "/";
     }
 }
 
