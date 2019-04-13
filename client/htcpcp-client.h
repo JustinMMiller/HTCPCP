@@ -3,7 +3,7 @@
 
 #include "../shared/shared.h"
 
-int sendRequest(Request *req);
+Response* sendRequest(Request *req);
 
 Response* get(char *url, Headers *headers);
 

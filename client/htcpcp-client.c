@@ -9,14 +9,16 @@
 #include "htcpcp-client.h"
 
 
-int sendRequest(Request *req){
-    char *host = getHeader(&req->headers, "HOST");
+Response* sendRequest(Request *req){
+    char *uri = getHeader(req->headers, "HOST");
+    strcat(uri, req->route);
+
     int sock = 0;
     struct sockaddr_in serv_addr;
 
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         printf("\n Socket creation error \n");
-        return -1;
+        return NULL;
     }
 
     memset(&serv_addr, '0', sizeof(serv_addr));
@@ -24,14 +26,14 @@ int sendRequest(Request *req){
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
-    if(inet_pton(AF_INET, host, &serv_addr.sin_addr) <= 0){
+    if(inet_pton(AF_INET, uri, &serv_addr.sin_addr) <= 0){
         printf("\nInvalid address/ Address not supported \n");
-        return -1;
+        return NULL;
     }
 
     if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
         printf("\nConnection Failed \n");
-        return -1;
+        return NULL;
     }
     
     char *payload = requestToString(req);
@@ -40,8 +42,8 @@ int sendRequest(Request *req){
     printf("Request sent\n");
     read(sock, buf, 1024);
     printf("Response received: %s\n", buf);
-
-    return 0;
+    Response *res = responseFromString(buf);
+    return res;
 }
 
 /**
@@ -59,27 +61,24 @@ Response* get(char *url, Headers *headers){
     // Extract the host and route from the remaining parts of the url
     // coffee://{HOST}/{ROUTE}
     char *host = strtok(NULL, delim);
-    printf("%s\n", host);
     char *temp = strtok(NULL, "");
     char *route = malloc(sizeof(char)*strlen(temp)+2);
     route[0] = '/';
     strcat(route, temp);
-    printf("%s\n", route);
 
-    if(headers == NULL){
+    if(headers == NULL)
         headers = createHeaders();
-    }
     setHeader(headers, "HOST", host);
 
     Request req = {
         .method = METHOD_GET,
         .route = route,
-        .headers = *headers,
+        .headers = headers,
         .body = NULL,
         .bodyLength = 0
     };
-    sendRequest(&req);
-    return NULL;
+    Response *res = sendRequest(&req);
+    return res;
 }
 
 int main(){
