@@ -11,7 +11,6 @@
 
 Response* sendRequest(Request *req){
     char *uri = getHeader(req->headers, "HOST");
-    strcat(uri, req->route);
 
     int sock = 0;
     struct sockaddr_in serv_addr;
@@ -57,11 +56,17 @@ void getURLParts(char *_url, char **dest_host, char **dest_route){
     // Extract the host and route from the remaining parts of the url
     // coffee://{HOST}/{ROUTE}
     strcpy(*dest_host, strtok(NULL, delim));
+
     char *temp = strtok(NULL, "");
-    char *route = malloc(sizeof(char)*strlen(temp)+2);
-    route[0] = '/';
-    strcat(route, temp);
-    *dest_route = route;
+    if(temp != NULL){
+        char *route = malloc(sizeof(char)*strlen(temp)+2);
+        route[0] = '/';
+        strcat(route, temp);
+        *dest_route = route;
+    }
+    else{
+        *dest_route = "";
+    }
 }
 
 /**
@@ -71,7 +76,6 @@ Response* get(char *url, Headers *headers){
     char *host = malloc(strlen(url));
     char *route = malloc(strlen(url));
     getURLParts(url, &host, &route);
-    printf("FUCK %s %s\n", host, route);
 
     if(headers == NULL)
         headers = createHeaders();
@@ -84,26 +88,13 @@ Response* get(char *url, Headers *headers){
         .body = NULL,
         .bodyLength = 0
     };
-    Response *res = sendRequest(&req);
-    return res;
+    return sendRequest(&req);
 }
 
-Response* post(char *url, Headers *headers, char* body, int bodyLength){
-    // Copy url to make it usable in strtok
-    char url2[strlen(url)+1];
-    strcpy(url2, url);
-
-    // Strip away the unnecessary beginning of the url
-    char delim[] = "/";
-    strtok(url2, delim);
-
-    // Extract the host and route from the remaining parts of the url
-    // coffee://{HOST}/{ROUTE}
-    char *host = strtok(NULL, delim);
-    char *temp = strtok(NULL, "");
-    char *route = malloc(sizeof(char)*strlen(temp)+2);
-    route[0] = '/';
-    strcat(route, temp);
+Response* brew(char *url, Headers *headers, char* body, int bodyLength){
+    char *host = malloc(strlen(url));
+    char *route = malloc(strlen(url));
+    getURLParts(url, &host, &route);
 
     if(headers == NULL)
         headers = createHeaders();
@@ -116,13 +107,15 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
         .body = body,
         .bodyLength = bodyLength
     };
-    Response *res = sendRequest(&req);
-    return res;
+    return sendRequest(&req);
+}
+
+Response* post(char *url, Headers *headers, char* body, int bodyLength){
+    return brew(url, headers, body, bodyLength);
 }
 
 int main(){
-
-    Response *res = get("coffee://127.0.0.1/brew", NULL);
+    Response *res = post("coffee://127.0.0.1/", NULL, "hello", 6);
     printf("%s\n", responseToString(res));
 
     return 0;
