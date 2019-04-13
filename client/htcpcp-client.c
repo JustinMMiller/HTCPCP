@@ -46,10 +46,49 @@ Response* sendRequest(Request *req){
     return res;
 }
 
+void getURLParts(char *_url, char **dest_host, char **dest_route){
+    // Copy url to make it usable in strtok
+    char url[strlen(_url)+1]; strcpy(url, _url);
+
+    // Strip away the unnecessary beginning of the url
+    char delim[] = "/";
+    strtok(url, delim);
+
+    // Extract the host and route from the remaining parts of the url
+    // coffee://{HOST}/{ROUTE}
+    strcpy(*dest_host, strtok(NULL, delim));
+    char *temp = strtok(NULL, "");
+    char *route = malloc(sizeof(char)*strlen(temp)+2);
+    route[0] = '/';
+    strcat(route, temp);
+    *dest_route = route;
+}
+
 /**
  * 
  */
 Response* get(char *url, Headers *headers){
+    char *host = malloc(strlen(url));
+    char *route = malloc(strlen(url));
+    getURLParts(url, &host, &route);
+    printf("FUCK %s %s\n", host, route);
+
+    if(headers == NULL)
+        headers = createHeaders();
+    setHeader(headers, "HOST", host);
+
+    Request req = {
+        .method = METHOD_GET,
+        .route = route,
+        .headers = headers,
+        .body = NULL,
+        .bodyLength = 0
+    };
+    Response *res = sendRequest(&req);
+    return res;
+}
+
+Response* post(char *url, Headers *headers, char* body, int bodyLength){
     // Copy url to make it usable in strtok
     char url2[strlen(url)+1];
     strcpy(url2, url);
@@ -71,31 +110,26 @@ Response* get(char *url, Headers *headers){
     setHeader(headers, "HOST", host);
 
     Request req = {
-        .method = METHOD_GET,
+        .method = METHOD_POST,
         .route = route,
         .headers = headers,
-        .body = NULL,
-        .bodyLength = 0
+        .body = body,
+        .bodyLength = bodyLength
     };
     Response *res = sendRequest(&req);
     return res;
 }
 
 int main(){
+
+    Response *res = get("coffee://127.0.0.1/brew", NULL);
+    printf("%s\n", responseToString(res));
+
     // Headers *h = createHeaders();
-    // setHeader(h, "hello", "world");
-    // setHeader(h, "iam", "sotired");
+    // setHeader(h, "Content-Type", "Application/json");
 
-    // Request req = {
-    //     .method = METHOD_GET,
-    //     .route = "/fuck/town/its5am",
-    //     .headers = *h,
-    //     .body = NULL,
-    //     .bodyLength = 0
-    // };
-    // printf("%s\n", requestToString(&req));
-
-    get("coffee://127.0.0.1/fuck/hello", NULL);
+    // char *body = "{\"hello\": \"world\"}";
+    // post("coffee://127.0.0.1/brewitupboiii", h, body, strlen(body));
 
     return 0;
 }
