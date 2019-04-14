@@ -85,7 +85,6 @@ Request *requestFromString(char *_str)
 	ret->route = malloc(strlen(troute)+1);
 	strcpy(ret->route, troute);
 	ret->headers = createHeaders();
-	strtok(NULL, "\n");
 	char *headerstart = strtok(NULL, "\n");
 	populateHeadersFromString(ret->headers, headerstart);
 	ret->bodyLength = atoi(getHeader(ret->headers, "Content-Length"));
