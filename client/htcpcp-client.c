@@ -39,7 +39,7 @@ Response* sendRequest(Request *req){
     printf("---------------------------------------\n");
     printf("SENDING PAYLOAD:\n%s\n", payload);
     printf("---------------------------------------\n");
-    char *buf[1024] = {0};
+    char buf[1024] = {0};
     send(sock, payload, strlen(payload), 0);
     printf("Request sent!\n");
     read(sock, buf, 1024);

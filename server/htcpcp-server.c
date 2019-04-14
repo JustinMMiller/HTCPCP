@@ -74,6 +74,7 @@ int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL)
 			return i;
 		}
 	}
+	pthread_mutex_unlock(&(server->lock));
 	return -1;
 }
 
@@ -155,6 +156,7 @@ void *runServer(void *server)
 		args->new_socket = new_socket;
 		pthread_t *handler = malloc(sizeof(pthread_t));
 		pthread_create(handler, NULL, handleRequest, args);
+		memset(buffer, 0, BUFFER_SIZE);
 	}
 }
 

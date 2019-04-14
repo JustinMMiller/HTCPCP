@@ -75,22 +75,22 @@ char* requestToString(Request *req){
 
 Request *requestFromString(char *_str)
 {
-    char str[strlen(_str)+1];
-    strcpy(str, _str);
+	char *str = malloc(strlen(_str)+1);
+	strcpy(str, _str);
 
 	Request *ret  = malloc(sizeof(Request));
 	char *token = strtok(str, " ");
 	ret->method  = atoi(token);
 	char *troute = strtok(NULL, " ");
 	ret->route = malloc(strlen(troute)+1);
-	memcpy(ret->route, troute, strlen(troute));
+	strcpy(ret->route, troute);
 	ret->headers = createHeaders();
-	strtok(NULL, "\r\n");
-	char *headerstart = strtok(NULL, "\r\n");
+	strtok(NULL, "\n");
+	char *headerstart = strtok(NULL, "\n");
 	populateHeadersFromString(ret->headers, headerstart);
 	ret->bodyLength = atoi(getHeader(ret->headers, "Content-Length"));
 	ret->body = malloc(ret->bodyLength+1);
-	memcpy(ret->body, strtok(NULL, "\r\n\r\n"), ret->bodyLength);
+	memcpy(ret->body, strtok(NULL, "\n"), ret->bodyLength);
 	return ret;
 }
 
@@ -128,7 +128,7 @@ char *responseToString(Response *res)
 	sprintf(ret+len, "%s", head);
 	len += strlen(head);
 	free(head);
-    printf("START %s\n", res->body);
+	printf("START %s\n", res->body);
 	sprintf(ret+len, "%s", res->body);
 	return ret;
 }
@@ -144,19 +144,19 @@ Response* responseFromString(char* string){
 	res->status = atoi(strtok(NULL, " "));
 	strtok(NULL, "\r\n");
 
-    // Parse header (up to "\r\n\r\n")
-    char *head_end = strstr(string, "\r\n\r\n");
-    int head_size = head_end - string;
-    char *head = malloc(head_size+1);
-    strncpy(head, string, head_size);
-    strcat(head, "\0");
+	// Parse header (up to "\r\n\r\n")
+	char *head_end = strstr(string, "\r\n\r\n");
+	int head_size = head_end - string;
+	char *head = malloc(head_size+1);
+	strncpy(head, string, head_size);
+	strcat(head, "\0");
 
 	res->headers = createHeaders();
-    populateHeadersFromString(res->headers, head);
+	populateHeadersFromString(res->headers, head);
 
 	// Rest of lines should be the body
-    res->body = head_end + 4;
-    res->bodyLength = strlen(res->body);
+	res->body = head_end + 4;
+	res->bodyLength = strlen(res->body);
 
 	return res;
 }
