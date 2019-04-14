@@ -53,12 +53,12 @@ char * getHeader(Headers *headers, char *key){
 void populateHeadersFromString(Headers *headers, char *str)
 {
 	char *key = strtok(NULL, ": ");
-	char *value = strtok(NULL, "\n");
+	char *value = strtok(NULL, "\r\n");
 	while(key != NULL){
 		// printf("%s: %s\n", key, value);
 		setHeader(headers, key, value);
 		key = strtok(NULL, ": ");
-		value = strtok(NULL, "\n");
+		value = strtok(NULL, "\r\n");
 	}
 }
 
@@ -128,6 +128,7 @@ char *responseToString(Response *res)
 	sprintf(ret+len, "%s", head);
 	len += strlen(head);
 	free(head);
+    printf("START %s\n", res->body);
 	sprintf(ret+len, "%s", res->body);
 	return ret;
 }
@@ -141,18 +142,22 @@ Response* responseFromString(char* string){
 	// Parse out status code
 	strtok(str, " ");
 	res->status = atoi(strtok(NULL, " "));
-	strtok(NULL, "\n");
+	strtok(NULL, "\r\n");
 	printf("%i\n", res->status);
-	// Rest of lines should contain one header each
+
+    // Parse header (up to "\r\n\r\n")
+    char *head_end = strstr(str, "\r\n\r\n");
+    int head_size = head_end - str;
+    char *head = malloc(head_size+1);
+    strncpy(head, str, head_size);
+    strcat(head, "\0");
+
 	res->headers = createHeaders();
-	char *key = strtok(NULL, ": ");
-	char *value = strtok(NULL, "\n");
-	while(key != NULL){
-		// printf("%s: %s\n", key, value);
-		setHeader(res->headers, key, value);
-		printf("%s: %s\n", res->headers->key[res->headers->length-1], res->headers->value[res->headers->length-1]);
-		key = strtok(NULL, ": ");
-		value = strtok(NULL, "\n");
-	}
+    populateHeadersFromString(res->headers, head);
+
+	// Rest of lines should be the body
+    res->body = head_end + 4;
+    res->bodyLength = strlen(res->body);
+
 	return res;
 }

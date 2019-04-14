@@ -30,6 +30,7 @@ typedef struct _Request {
     int bodyLength;
 } Request;
 char* requestToString(Request *req);
+Request *requestFromString(char *str);
 
 typedef struct _Response {
     int status;
@@ -39,6 +40,5 @@ typedef struct _Response {
 } Response;
 char *responseToString(Response *res);
 Response* responseFromString(char* string);
-Request *requestFromString(char *str);
 
 #endif
