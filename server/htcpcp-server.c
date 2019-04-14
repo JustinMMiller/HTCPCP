@@ -12,7 +12,6 @@
 
 
 #define MAX_THREADS_HTCPCP_SERVER 32
-#define PORT 489
 #define BUFFER_SIZE 4096
 
 HTCPCPServer *getServer()
