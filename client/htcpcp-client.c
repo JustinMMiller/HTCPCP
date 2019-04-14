@@ -104,6 +104,7 @@ Response* brew(char *url, Headers *headers, char* body, int bodyLength){
     if(headers == NULL)
         headers = createHeaders();
     setHeader(headers, "HOST", host);
+    setHeader(headers, "Content-Length", "0");
 
     Request req = {
         .method = METHOD_POST,
@@ -119,3 +120,22 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
     return brew(url, headers, body, bodyLength);
 }
 
+Response* delete(char *url, Headers *headers, char* body, int bodyLength){
+    char *host = malloc(strlen(url));
+    char *route = malloc(strlen(url));
+    getURLParts(url, &host, &route);
+
+    if(headers == NULL)
+        headers = createHeaders();
+    setHeader(headers, "HOST", host);
+    setHeader(headers, "Content-Length", "0");
+
+    Request req = {
+        .method = METHOD_DELETE,
+        .route = route,
+        .headers = headers,
+        .body = body,
+        .bodyLength = bodyLength
+    };
+    return sendRequest(&req);
+}

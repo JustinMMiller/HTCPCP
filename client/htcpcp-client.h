@@ -24,4 +24,7 @@ Response* propfind(char *url, Headers *headers);
 /* Performs a WHEN request to the given url */
 Response* when(char *url, Headers *headers);
 
+/* Performs a DELETE request to the given url */
+Response* delete(char *url, Headers *headers, char* body, int bodyLength);
+
 #endif
