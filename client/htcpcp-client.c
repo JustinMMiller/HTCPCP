@@ -36,12 +36,15 @@ Response* sendRequest(Request *req){
     }
     
     char *payload = requestToString(req);
-    printf("%s\n", payload);
+    printf("---------------------------------------\n");
+    printf("SENDING PAYLOAD:\n%s\n", payload);
+    printf("---------------------------------------\n");
     char *buf[1024] = {0};
     send(sock, payload, strlen(payload), 0);
-    printf("Request sent\n");
+    printf("Request sent!\n");
     read(sock, buf, 1024);
-    printf("Response received: %s\n", buf);
+    printf("Response received:\n%s\n", buf);
+    printf("---------------------------------------\n");
     Response *res = responseFromString(buf);
     return res;
 }
@@ -118,7 +121,6 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
 
 int main(){
     Response *res = get("coffee://127.0.0.1/brew", NULL);
-    printf("%s\n", responseToString(res));
 
     return 0;
 }

@@ -143,13 +143,12 @@ Response* responseFromString(char* string){
 	strtok(str, " ");
 	res->status = atoi(strtok(NULL, " "));
 	strtok(NULL, "\r\n");
-	printf("%i\n", res->status);
 
     // Parse header (up to "\r\n\r\n")
-    char *head_end = strstr(str, "\r\n\r\n");
-    int head_size = head_end - str;
+    char *head_end = strstr(string, "\r\n\r\n");
+    int head_size = head_end - string;
     char *head = malloc(head_size+1);
-    strncpy(head, str, head_size);
+    strncpy(head, string, head_size);
     strcat(head, "\0");
 
 	res->headers = createHeaders();
