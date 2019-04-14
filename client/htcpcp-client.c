@@ -119,8 +119,3 @@ Response* post(char *url, Headers *headers, char* body, int bodyLength){
     return brew(url, headers, body, bodyLength);
 }
 
-int main(){
-    Response *res = get("coffee://127.0.0.1/brew", NULL);
-
-    return 0;
-}

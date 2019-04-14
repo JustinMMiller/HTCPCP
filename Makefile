@@ -1,14 +1,29 @@
 all: client.out server.out
 
-client.out: client/htcpcp-client.c shared/shared.c
-	gcc -Wall -g client/htcpcp-client.c -o client.o -c &&\
-	gcc -Wall -g shared/shared.c -o shared.o -c &&\
-	gcc -o client.out -g client.o shared.o
+libs: libhtcpcpclient.a libhtcpcpserver.a
 
-server.out: server/htcpcp-server.c shared/shared.c
-	gcc -Wall -g server/htcpcp-server.c -o server.o -c -pthread &&\
-	gcc -Wall -g shared/shared.c -o shared.o -c &&\
-	gcc -o server.out -g server.o shared.o -pthread
+libhtcpcpclient.a: shared.o libclient.o
+	ar rcs $@ $< && \
+	mv $@ outputlibs/
+
+libhtcpcpserver.a: shared.o libserver.o
+	ar rcs $@ $< && \
+	mv $@ outputlibs/
+
+libserver.o: server/htcpcp-server.c
+	gcc -Wall -g $^ -o libserver.o -c
+
+libclient.o: client/htcpcp-client.c
+	gcc -Wall -g $^ -o libclient.o -c
+
+shared.o: shared/shared.c
+	gcc -Wall -g $^ -o $@ -c
+
+client.out: client/client.c client/htcpcp-client.c shared/shared.c
+	gcc -Wall -g -o $@ $^ -pthread -Iclient
+
+server.out: server/server.c server/htcpcp-server.c shared/shared.c
+	gcc -Wall -g -o $@ $^ -pthread -Iserver
 
 nodotos:
 	rm *.o

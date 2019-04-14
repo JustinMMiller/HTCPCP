@@ -20,6 +20,7 @@ typedef struct _HTCPCPServer
 	pthread_t mainThread;
 	sem_t children;
 	pthread_mutex_t lock;
+	int impl_methods;
 } HTCPCPServer;
 
 // Public functions

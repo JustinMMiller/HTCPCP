@@ -21,8 +21,10 @@ HTCPCPServer *getServer()
 	server->callbackMethods = calloc(50, sizeof(int));
 	server->callbackURLs = calloc(50, sizeof(char*));
 	pthread_mutex_init(&(server->lock), NULL);
+	sem_init(&(server->children), 0, MAX_THREADS_HTCPCP_SERVER);
 	server->numCallbacks = 0;
 	server->maxCallbacks = 50;
+	server->impl_methods = 0;
 	return server;
 }
 
@@ -38,6 +40,7 @@ void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callbac
 		strcpy(str, url);
 		server->callbackURLs[n] = str;
 		server->numCallbacks++;
+		server->impl_methods |= method;
 		pthread_mutex_unlock(&(server->lock));
 		return;
 	}
@@ -91,12 +94,43 @@ typedef struct _HandleRequestArgs
 void *handleRequest(void *args)
 {
 	HandleRequestArgs *a = (HandleRequestArgs *)args;
+	sem_wait(&(a->server->children));
 	Request *req = requestFromString(a->buffer);
+	if(req == NULL)
+	{
+		Response *res = malloc(sizeof(Response));
+		res->status = STATUS_NOT_FOUND;
+		res->headers = createHeaders();
+		setHeader(res->headers, "Safe", "no");
+		res->body = malloc(20);
+		strcpy(res->body, "You Done goofed\0");
+		res->bodyLength = strlen(res->body+1);
+		char *str = responseToString(res);
+		send(a->new_socket, str, strlen(str), 0);
+		sem_post(&(a->server->children));
+		return NULL;
+	}
 	printf("%s\n", requestToString(req));
 	int callbackIndex = getCallbackIndex(a->server, req->method, req->route);
 	if(callbackIndex < 0)
 	{
 		printf("Unable to find a callback for route %s\n", req->route);
+		Response *res = malloc(sizeof(Response));
+		if(!(a->server->impl_methods & req->method))
+		{
+			res->status = STATUS_NOT_IMPL;
+		}
+		else
+		{
+			res->status = STATUS_NOT_FOUND;
+		}
+		res->headers = createHeaders();
+		setHeader(res->headers, "Safe", "no");
+		res->body = malloc(20);
+		strcpy(res->body, "You Done goofed\0");
+		res->bodyLength = strlen(res->body+1);
+		char *str = responseToString(res);
+		send(a->new_socket, str, strlen(str), 0);
 		return NULL;
 	}
 	pthread_mutex_lock(&(a->server->lock));
@@ -104,6 +138,8 @@ void *handleRequest(void *args)
 	pthread_mutex_unlock(&(a->server->lock));
 	char *str = responseToString(res);
 	send(a->new_socket, str, strlen(str), 0);
+	sem_post(&(a->server->children));
+	return NULL;
 }
 
 void *runServer(void *server)
@@ -136,6 +172,13 @@ void *runServer(void *server)
 	printf("Socket bound on port %i\n", PORT);
 	while(1)
 	{
+		memset(buffer, 0, BUFFER_SIZE);
+		int numKids = 0;
+		sem_getvalue(&(s->children), &numKids);
+		if(!numKids)
+		{
+			continue;
+		}
 		if(listen(server_fd, MAX_THREADS_HTCPCP_SERVER) < 0)
 		{
 			printf("Error while listening\n");
@@ -155,7 +198,6 @@ void *runServer(void *server)
 		args->new_socket = new_socket;
 		pthread_t *handler = malloc(sizeof(pthread_t));
 		pthread_create(handler, NULL, handleRequest, args);
-		memset(buffer, 0, BUFFER_SIZE);
 	}
 }
 
@@ -166,22 +208,3 @@ void startServer(HTCPCPServer *server)
 	pthread_mutex_unlock(&(server->lock));
 }
 
-Response * myCallback(Request *req)
-{
-	Response *res = malloc(sizeof(Response));
-	res->status = STATUS_OK;
-	res->headers = createHeaders();
-	setHeader(res->headers, "Safe", "yes");
-	res->body = malloc(20);
-	strcpy(res->body, "Hello World\0");
-	res->bodyLength = strlen(res->body+1);
-	return res;
-}
-
-int main()
-{
-	HTCPCPServer *server = getServer();
-	addRoute(server, METHOD_GET, "/brew", myCallback);
-	startServer(server);
-	while(1){sleep(1);printf("Yawn\n");}
-}
