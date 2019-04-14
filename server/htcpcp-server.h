@@ -21,13 +21,14 @@ typedef struct _HTCPCPServer
 	sem_t children;
 	pthread_mutex_t lock;
 	int impl_methods;
+        char *address;
 } HTCPCPServer;
 
 // Public functions
 void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback);
 HTCPCPServer *getServer();
 void startServer(HTCPCPServer *server);
-void stopServer(HTCPCPServer *server);
+void setServerAddress(HTCPCPServer *server, char *address);
 
 // Internal functions
 void *runServer(void *server); 	// Main thread function.
