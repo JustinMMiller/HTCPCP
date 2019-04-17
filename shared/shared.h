@@ -24,14 +24,11 @@
 /**
  * @struct Headers
  * This struct represents the headers of a HTCPCP Request or Response
- * @member key The list of keys for the headers
- * @member value The list of values for the headers
- * @member length The number of entries in the Headers
  */
 typedef struct _Headers {
-    char **key;
-    char **value;
-    int length;
+    char **key; //!< The list of keys for the headers
+    char **value; //!< The list of values for the headers
+    int length; //!< The number of entries in the Headers
 } Headers;
 /**
  * This function instantiates a Headers struct and returns it.
@@ -57,18 +54,13 @@ int setHeader(Headers *headers, char *key, char *value);
 /**
  * @struct Request
  * This struct represents a HTCPCP request.
- * @member method The HTCPCP method of the request
- * @member route The route the request was sent to.
- * @member headers The Headers of the request
- * @member body The content of the request
- * @method bodyLength The length of the content of the request
  */
 typedef struct _Request {
-    int method;
-    char* route;
-    Headers *headers;
-    char *body;
-    int bodyLength;
+    int method; //!< The HTCPCP method of the request
+    char* route; //!< The route the request was sent to.
+    Headers *headers; //!< The Headers of the request
+    char *body; //!< The content of the request
+    int bodyLength; //!< The length of the content of the request
 } Request;
 /**
  * This function takes in a Request and creates a string representation of it.
@@ -86,16 +78,12 @@ Request *requestFromString(char *str);
 /**
  * @struct Response
  * This struct represents a HTCPCP response
- * @member status The status code of the response
- * @member headers The headers of the response
- * @member body The content of the response
- * @member bodyLength The length of the content of the response
  */
 typedef struct _Response {
-    int status;
-    Headers *headers;
-    char *body;
-    int bodyLength;
+    int status; //!< The status code of the response
+    Headers *headers; //!< The headers of the response
+    char *body; //!< The content of the response
+    int bodyLength; //!< The length of the content of the response
 } Response;
 /**
  * This function takes in a Response and creates a string representation of it.

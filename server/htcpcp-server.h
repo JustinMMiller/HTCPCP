@@ -8,34 +8,24 @@
 typedef Response * callbackFunc(Request*);
 
 /**
- * @struct HTCPCPServer
+ * @struct _HTCPCPServer
  * This struct represents a HTCPCPServer.
- * @member callbackURLs The URLs of registered callbacks.
- * @member callbackMethods The HTCPCP function of the registered callbacks
- * @member callbacks The function pointers to the registered callbacks
- * @member numCallbacks The number of callbacks currently registered
- * @member maxCallbacks The max number of callbacks the server can currently hold
- * @member mainThread The pthread representing the main server thread
- * @member children A semaphore to limit the number of concurrent connections
- * @member lock A lock for use with the server object internally.
- * @member impl_methods A bitmask of methods the server callbacks implement
- * @member address The address the server is bound to.
  */
 typedef struct _HTCPCPServer
 {
 	// The following 3 arrays are kept in lockstep such that index
 	// i from each array forms the total information of the ith callback.
 	// Yes, callbacks is an array of function pointers. I'm looking forward to it.
-	char **callbackURLs;
-	int *callbackMethods;
-	callbackFunc **callbacks;
-	int numCallbacks;
-	int maxCallbacks;
-	pthread_t mainThread;
-	sem_t children;
-	pthread_mutex_t lock;
-	int impl_methods;
-        char *address;
+	char **callbackURLs; //!< The URLs of registered callbacks.
+	int *callbackMethods; //!< The HTCPCP function of the registered callbacks
+	callbackFunc **callbacks; //!< The function pointers to the registered callbacks
+	int numCallbacks; //!< The number of callbacks currently registered
+	int maxCallbacks; //!< The max number of callbacks the server can currently hold
+	pthread_t mainThread; //!< The pthread representing the main server thread
+	sem_t children; //!< A semaphore to limit the number of concurrent connections
+	pthread_mutex_t lock; //!< A lock for use with the server object internally.
+	int impl_methods; //!< A bitmask of methods the server callbacks implement
+        char *address; //!< The address the server is bound to.
 } HTCPCPServer;
 
 // Public functions
@@ -59,6 +49,8 @@ HTCPCPServer *getServer();
 void startServer(HTCPCPServer *server);
 /**
  * This function sets the address the server is attached to.
+ * @param server The HTCPCPServer instance
+ * @param address The address to bind to
  */
 void setServerAddress(HTCPCPServer *server, char *address);
 
