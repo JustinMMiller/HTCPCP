@@ -51,6 +51,8 @@ Response* sendRequest(Request *req){
 
 void getURLParts(char *_url, char **dest_host, char **dest_route){
     // Copy url to make it usable in strtok
+    // $$TODO Make this on the heap so it isn't smashed by the
+    // stack.
     char url[strlen(_url)+1]; strcpy(url, _url);
 
     // Strip away the unnecessary beginning of the url
