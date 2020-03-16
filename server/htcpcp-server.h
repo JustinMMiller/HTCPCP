@@ -1,11 +1,24 @@
 #ifndef HTCPCP_SERVER_H
 #define HTCPCP_SERVER_H
 
-#include "../shared/shared.h"
 #include <pthread.h>
 #include <semaphore.h>
 
-typedef Response * callbackFunc(Request*);
+#include "../shared/shared.h"
+
+#define MAX_THREADS_HTCPCP_SERVER 32
+#define BUFFER_SIZE 4096
+#define CALLBACK_ARRAY_INITIAL_LENGTH 10
+
+
+typedef Response *callbackFunc(Request*);
+
+typedef struct _Callback
+{
+    char *url;
+    int method;
+    callbackFunc *callback;
+} Callback;
 
 /**
  * @struct _HTCPCPServer
@@ -13,19 +26,20 @@ typedef Response * callbackFunc(Request*);
  */
 typedef struct _HTCPCPServer
 {
-	// The following 3 arrays are kept in lockstep such that index
-	// i from each array forms the total information of the ith callback.
-	// Yes, callbacks is an array of function pointers. I'm looking forward to it.
-	char **callbackURLs; //!< The URLs of registered callbacks.
-	int *callbackMethods; //!< The HTCPCP function of the registered callbacks
-	callbackFunc **callbacks; //!< The function pointers to the registered callbacks
-	int numCallbacks; //!< The number of callbacks currently registered
-	int maxCallbacks; //!< The max number of callbacks the server can currently hold
-	pthread_t mainThread; //!< The pthread representing the main server thread
-	sem_t children; //!< A semaphore to limit the number of concurrent connections
-	pthread_mutex_t lock; //!< A lock for use with the server object internally.
-	int impl_methods; //!< A bitmask of methods the server callbacks implement
-        char *address; //!< The address the server is bound to.
+    // $$TODO Wrap these 3 arrays into an array of Callback structs.
+    // The following 3 arrays are kept in lockstep such that index
+    // i from each array forms the total information of the ith callback.
+    // Yes, callbacks is an array of function pointers. I'm looking forward to it.
+    char **callbackURLs; //!< The URLs of registered callbacks.
+    int *callbackMethods; //!< The HTCPCP function of the registered callbacks
+    callbackFunc **callbacks; //!< The function pointers to the registered callbacks
+    int numCallbacks; //!< The number of callbacks currently registered
+    int maxCallbacks; //!< The max number of callbacks the server can currently hold
+    pthread_t mainThread; //!< The pthread representing the main server thread
+    sem_t children; //!< A semaphore to limit the number of concurrent connections
+    pthread_mutex_t lock; //!< A lock for use with the server object internally.
+    int impl_methods; //!< A bitmask of methods the server callbacks implement
+    char *address; //!< The address the server is bound to.
 } HTCPCPServer;
 
 // Public functions
@@ -37,16 +51,19 @@ typedef struct _HTCPCPServer
  * @param callback The function to call when a request of the given method is received at the given url
  */
 void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback);
+// $$TODO Add a deleteRoute and an updateRoute method.
 /**
  * This function instantiates an HTCPCPServer instance and returns it.
  * @return A prepared HTCPCPServer reference.
  */
 HTCPCPServer *getServer();
+
 /**
  * This function starts the server running.
  * @param server The HTCPCPServer instance
  */
 void startServer(HTCPCPServer *server);
+
 /**
  * This function sets the address the server is attached to.
  * @param server The HTCPCPServer instance
@@ -58,12 +75,14 @@ void setServerAddress(HTCPCPServer *server, char *address);
 /**
  * Internal helper function. This is the function the mainThread runs.
  */
-void *runServer(void *server); 	// Main thread function.
+void *runServer(void *server);	// Main thread function.
+
 /**
  * Internal helper function. This is the function called by helper threads when a request comes in.
  * It parses out the Request and calls the appropriate callback function.
  */
 void *handleRequest(void *args);
+
 /**
  * Internal helper function. This finds the index of a callbacks.
  * @returns The index of the callback, -1 if it doesn't exist.

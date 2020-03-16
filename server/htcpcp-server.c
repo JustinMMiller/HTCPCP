@@ -1,29 +1,24 @@
-#include "htcpcp-server.h"
-
-#include <string.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <regex.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <regex.h>
+#include <sys/socket.h>
 #include <unistd.h>
-#include <stdio.h>
 
-
-#define MAX_THREADS_HTCPCP_SERVER 32
-#define BUFFER_SIZE 4096
+#include "htcpcp-server.h"
 
 HTCPCPServer *getServer()
 {
     HTCPCPServer *server = malloc(sizeof(HTCPCPServer));
-    server->callbacks = calloc(50, sizeof(callbackFunc*));
-    server->callbackMethods = calloc(50, sizeof(int));
-    server->callbackURLs = calloc(50, sizeof(char*));
+    server->callbacks = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(callbackFunc*));
+    server->callbackMethods = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(int));
+    server->callbackURLs = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(char*));
     pthread_mutex_init(&(server->lock), NULL);
     sem_init(&(server->children), 0, MAX_THREADS_HTCPCP_SERVER);
     server->numCallbacks = 0;
-    server->maxCallbacks = 50;
+    server->maxCallbacks = CALLBACK_ARRAY_INITIAL_LENGTH;
     server->impl_methods = 0;
     server->address = NULL;
     return server;
@@ -31,12 +26,15 @@ HTCPCPServer *getServer()
 
 void setServerAddress(HTCPCPServer *server, char *address)
 {
+    // $$GLOBAL strncpy
     server->address = malloc(strlen(address)+1);
     strcpy(server->address, address);
 }
 
 void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback)
 {
+    // $$TODO What should be done in the event of a duplicate method/url combo?
+    // $$TODO Switch this to the Callback struct.
     pthread_mutex_lock(&(server->lock));
     int n = server->numCallbacks;
     if(server->numCallbacks < server->maxCallbacks)
@@ -53,9 +51,11 @@ void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callbac
     }
     else
     {
-        int *tmethods = malloc(sizeof(int)*(n + (n/2)));
-        char **turls = malloc(sizeof(char*)*(n + (n/2)));
-        callbackFunc **tfuncs = malloc(sizeof(callbackFunc*)*(n+(n/2)));
+        // $$TODO can we make this realloc?
+        // $$GLOBAL Literally any return value checking
+        int *tmethods = calloc((n + (n/2)), sizeof(int));
+        char **turls = calloc((n + (n/2)), sizeof(char*));
+        callbackFunc **tfuncs = calloc((n + (n/2)), sizeof(callbackFunc*));
         memcpy(tmethods, server->callbackMethods, n*sizeof(int));
         memcpy(turls, server->callbackURLs, n*sizeof(char*));
         memcpy(tfuncs, server->callbacks, n*sizeof(callbackFunc*));
@@ -65,7 +65,7 @@ void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callbac
         server->callbacks = tfuncs;
         server->callbackMethods = tmethods;
         server->callbackURLs = turls;
-        server->maxCallbacks = (n*(n/2));
+        server->maxCallbacks = (n + (n/2));
         pthread_mutex_unlock(&(server->lock));
         addRoute(server, method, url, callback);
     }
@@ -118,6 +118,7 @@ void *handleRequest(void *args)
         return NULL;
     }
     printf("%s\n", requestToString(req));
+    // $$TODO This should be refactored to be processCallback(server, method, route.)
     int callbackIndex = getCallbackIndex(a->server, req->method, req->route);
     if(callbackIndex < 0)
     {
@@ -135,12 +136,14 @@ void *handleRequest(void *args)
         setHeader(res->headers, "Safe", "no");
         res->body = malloc(20);
         strcpy(res->body, "You Done goofed\0");
-        res->bodyLength = strlen(res->body+1);
+        res->bodyLength = strlen(res->body)+1;
         char *str = responseToString(res);
         send(a->new_socket, str, strlen(str), 0);
         return NULL;
     }
     pthread_mutex_lock(&(a->server->lock));
+    // $$TODO Finding the callback and calling it should be
+    //  in the same critical section
     Response *res = (*(a->server->callbacks[callbackIndex]))(req);
     pthread_mutex_unlock(&(a->server->lock));
     char *str = responseToString(res);
@@ -162,7 +165,7 @@ void *runServer(void *server)
         printf("Socket failed\n");
         return NULL;
     }
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR,
                 &opt, sizeof(opt)))
     {
         perror("setsockopt");
@@ -210,6 +213,7 @@ void *runServer(void *server)
 
 void startServer(HTCPCPServer *server)
 {
+    // $$TODO Ensure all fields of server are in a valid state.
     if(server->address == NULL)
     {
         setServerAddress(server, "127.0.0.1");

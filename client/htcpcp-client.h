@@ -4,20 +4,6 @@
 #include "../shared/shared.h"
 
 /**
- * Takes in a Request and opens a socket to ship it off to its destination 
- * @param req The request to be sent.
- */
-Response* sendRequest(Request *req);
-
-/**
- * Splits a URL into its host and route parts, i.e. 'coffee://{HOST}/{ROUTE}' 
- * @param _url the url to be split.
- * @param dest_host a pointer to the char * to hold the host string
- * @param dest_route a pointer to the char * to hold the route string.
- */
-void getURLParts(char *_url, char **dest_host, char **dest_route);
-
-/**
  * Performs a GET request to the given url 
  * @param url the url to send the request to
  * @param headers The Headers to send with the request.

@@ -1,3 +1,5 @@
+# $$TODO Make this output a library instead of compiling
+# directly into the executable.
 all: client.out server.out
 
 client.out: client/client.c client/htcpcp-client.c shared/shared.c
