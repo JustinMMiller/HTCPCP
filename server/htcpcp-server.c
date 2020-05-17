@@ -12,9 +12,7 @@
 HTCPCPServer *getServer()
 {
     HTCPCPServer *server = malloc(sizeof(HTCPCPServer));
-    server->callbacks = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(callbackFunc*));
-    server->callbackMethods = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(int));
-    server->callbackURLs = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(char*));
+    server->callbacks = calloc(CALLBACK_ARRAY_INITIAL_LENGTH, sizeof(Callback));
     pthread_mutex_init(&(server->lock), NULL);
     sem_init(&(server->children), 0, MAX_THREADS_HTCPCP_SERVER);
     server->numCallbacks = 0;
@@ -34,16 +32,15 @@ void setServerAddress(HTCPCPServer *server, char *address)
 void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback)
 {
     // $$TODO What should be done in the event of a duplicate method/url combo?
-    // $$TODO Switch this to the Callback struct.
     pthread_mutex_lock(&(server->lock));
     int n = server->numCallbacks;
     if(server->numCallbacks < server->maxCallbacks)
     {
-        server->callbacks[n] = callback;
-        server->callbackMethods[n] = method;
+        server->callbacks[n].callback = callback;
+        server->callbacks[n].method = method;
         char *str = malloc(strlen(url) + 1);
         strcpy(str, url);
-        server->callbackURLs[n] = str;
+        server->callbacks[n].url = str;
         server->numCallbacks++;
         server->impl_methods |= method;
         pthread_mutex_unlock(&(server->lock));
@@ -51,23 +48,24 @@ void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callbac
     }
     else
     {
-        // $$TODO can we make this realloc?
-        // $$GLOBAL Literally any return value checking
-        int *tmethods = calloc((n + (n/2)), sizeof(int));
-        char **turls = calloc((n + (n/2)), sizeof(char*));
-        callbackFunc **tfuncs = calloc((n + (n/2)), sizeof(callbackFunc*));
-        memcpy(tmethods, server->callbackMethods, n*sizeof(int));
-        memcpy(turls, server->callbackURLs, n*sizeof(char*));
-        memcpy(tfuncs, server->callbacks, n*sizeof(callbackFunc*));
-        free(server->callbackMethods);
-        free(server->callbacks);
-        free(server->callbackURLs);
-        server->callbacks = tfuncs;
-        server->callbackMethods = tmethods;
-        server->callbackURLs = turls;
-        server->maxCallbacks = (n + (n/2));
-        pthread_mutex_unlock(&(server->lock));
-        addRoute(server, method, url, callback);
+        Callback *temp = realloc(server->callbacks, 
+                             sizeof(Callback) * (n + (n/2)));
+        if(temp)
+        {
+            memset(temp+n, 0, sizeof(Callback) * (n/2));
+            free(server->callbacks);
+            server->callbacks = temp;
+            server->maxCallbacks = (n + (n/2));
+            pthread_mutex_unlock(&(server->lock));
+            addRoute(server, method, url, callback);
+        }
+        else
+        {
+            printf("Unable to allocate more space for ");
+            printf("more callbacks, leaving existing callbacks ");
+            printf("in place\n");
+        }
+        
     }
 }
 
@@ -76,8 +74,8 @@ int getCallbackIndex(HTCPCPServer *server, int method, char *callbackURL)
     pthread_mutex_lock(&(server->lock));
     for(int i = 0; i < server->numCallbacks; i++)
     {
-        if(server->callbackMethods[i] == method &&
-                !strcmp(callbackURL, server->callbackURLs[i]))
+        if(server->callbacks[i].method == method &&
+                !strcmp(callbackURL, server->callbacks[i].url))
         {
             pthread_mutex_unlock(&(server->lock));
             return i;
@@ -114,6 +112,7 @@ void *handleRequest(void *args)
         res->bodyLength = strlen(res->body+1);
         char *str = responseToString(res);
         send(a->new_socket, str, strlen(str), 0);
+        destroyResponse(res);
         sem_post(&(a->server->children));
         return NULL;
     }
@@ -139,12 +138,14 @@ void *handleRequest(void *args)
         res->bodyLength = strlen(res->body)+1;
         char *str = responseToString(res);
         send(a->new_socket, str, strlen(str), 0);
+        destroyResponse(res);
+        sem_post(&(a->server->children));
         return NULL;
     }
     pthread_mutex_lock(&(a->server->lock));
     // $$TODO Finding the callback and calling it should be
     //  in the same critical section
-    Response *res = (*(a->server->callbacks[callbackIndex]))(req);
+    Response *res = (*(a->server->callbacks[callbackIndex].callback))(req);
     pthread_mutex_unlock(&(a->server->lock));
     char *str = responseToString(res);
     send(a->new_socket, str, strlen(str), 0);

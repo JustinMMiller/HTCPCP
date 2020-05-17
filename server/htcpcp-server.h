@@ -13,26 +13,27 @@
 
 typedef Response *callbackFunc(Request*);
 
+/**
+ * @struct Callback
+ * Internal structure use to represent HTCPCP
+ * server function callbacks.
+ */
 typedef struct _Callback
 {
-    char *url;
-    int method;
-    callbackFunc *callback;
+    char *url; //!< The endpoint a Callback is registered to. 
+    int method; //!< The method (GET, BREW, etc.) this callback is for.
+    callbackFunc *callback; //!< The function to call for this endpoint method combo.
 } Callback;
 
 /**
- * @struct _HTCPCPServer
+ * @struct HTCPCPServer
  * This struct represents a HTCPCPServer.
+ * It should be controlled with the appropriate functions,
+ * and not manipulated directly.
  */
 typedef struct _HTCPCPServer
 {
-    // $$TODO Wrap these 3 arrays into an array of Callback structs.
-    // The following 3 arrays are kept in lockstep such that index
-    // i from each array forms the total information of the ith callback.
-    // Yes, callbacks is an array of function pointers. I'm looking forward to it.
-    char **callbackURLs; //!< The URLs of registered callbacks.
-    int *callbackMethods; //!< The HTCPCP function of the registered callbacks
-    callbackFunc **callbacks; //!< The function pointers to the registered callbacks
+    Callback *callbacks; //!< An array of Callback structs.
     int numCallbacks; //!< The number of callbacks currently registered
     int maxCallbacks; //!< The max number of callbacks the server can currently hold
     pthread_t mainThread; //!< The pthread representing the main server thread
@@ -52,6 +53,7 @@ typedef struct _HTCPCPServer
  */
 void addRoute(HTCPCPServer *server, int method, char *url, callbackFunc *callback);
 // $$TODO Add a deleteRoute and an updateRoute method.
+
 /**
  * This function instantiates an HTCPCPServer instance and returns it.
  * @return A prepared HTCPCPServer reference.

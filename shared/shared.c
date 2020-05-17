@@ -61,26 +61,27 @@ char *getHeader(Headers *headers, char *key)
 // When passed in the string of headers, it will populate the Headers struct.
 void populateHeadersFromString(Headers *headers, char *str)
 {
-    char *key = strtok(NULL, ": ");
-    char *value = strtok(NULL, "\r\n");
+    char *str_tok;
+    strtok_r(str, "\r\n", &str_tok);
+    char *key = strtok_r(NULL, ": ", &str_tok);
+    char *value = strtok_r(NULL, "\r\n", &str_tok);
     while(key != NULL)
     {
-        // printf("%s: %s\n", key, value);
         setHeader(headers, key, value);
-        key = strtok(NULL, ": ");
-        value = strtok(NULL, "\r\n");
+        key = strtok_r(NULL, ": ", &str_tok);
+        value = strtok_r(NULL, "\r\n", &str_tok);
     }
 }
 
 char *requestToString(Request *req)
 {
     char* string = malloc(sizeof(char)*(14+3+strlen(req->route)));
-    sprintf(string, "%i %s HTCPCP/1.0\n", req->method, req->route);
+    sprintf(string, "%i %s HTCPCP/1.0\r\n", req->method, req->route);
     for(int i = 0; i < req->headers->length; i++)
     {
         char *buf = malloc(sizeof(char)*(4+strlen(req->headers->key[i])+strlen(req->headers->value[i])));
-        sprintf(buf, "%s: %s\n", req->headers->key[i], req->headers->value[i]);
-        strcat(string, buf);
+        sprintf(buf, "%s: %s\r\n", req->headers->key[i], req->headers->value[i]);
+        string = strcat(string, buf);
     }
     return string;
 }
@@ -88,20 +89,21 @@ char *requestToString(Request *req)
 Request *requestFromString(char *_str)
 {
     char *str = malloc(strlen(_str)+1);
+    char *str_tok;
     strcpy(str, _str);
 
     Request *ret  = malloc(sizeof(Request));
-    char *token = strtok(str, " ");
+    char *token = strtok_r(str, " ", &str_tok);
     ret->method  = atoi(token);
-    char *troute = strtok(NULL, " ");
+    char *troute = strtok_r(NULL, " ", &str_tok);
     ret->route = malloc(strlen(troute)+1);
     strcpy(ret->route, troute);
     ret->headers = createHeaders();
-    char *headerstart = strtok(NULL, "\n");
+    char *headerstart = strtok_r(NULL, "\n", &str_tok);
     populateHeadersFromString(ret->headers, headerstart);
     ret->bodyLength = atoi(getHeader(ret->headers, "Content-Length"));
     ret->body = malloc(ret->bodyLength+1);
-    memcpy(ret->body, strtok(NULL, "\n"), ret->bodyLength);
+    memcpy(ret->body, strtok_r(NULL, "\n", &str_tok), ret->bodyLength);
     return ret;
 }
 
@@ -146,21 +148,22 @@ char *responseToString(Response *res)
 
 Response *responseFromString(char* string)
 {
-    char str[strlen(string)+1];
+    char *str = malloc(strlen(string)+1);
+    char *str_tok;
     strcpy(str, string);
     // Init response object
     Response *res = malloc(sizeof(Response));
 
     // Parse out status code
-    strtok(str, " ");
-    res->status = atoi(strtok(NULL, " "));
-    strtok(NULL, "\r\n");
+    strtok_r(str, " ", &str_tok);
+    res->status = atoi(strtok_r(NULL, " ", &str_tok));
+    strtok_r(NULL, "\r\n", &str_tok);
 
     // Parse header (up to "\r\n\r\n")
     char *head_end = strstr(string, "\r\n\r\n");
-    int head_size = head_end - string;
+    int head_size = head_end - strstr(string, "\r\n");
     char *head = malloc(head_size+1);
-    strncpy(head, string, head_size);
+    strncpy(head, strstr(string, "\r\n"), head_size);
     strcat(head, "\0");
 
     res->headers = createHeaders();

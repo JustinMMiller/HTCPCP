@@ -4,7 +4,7 @@
 
 int main()
 {
-    Response *res = get("coffee://127.0.0.1/brew", NULL);
+    Response *res = post("coffee://127.0.0.1/brew", NULL, "a", 1);
     printf("Received response : %s\n", res->body);
 
     return 0;
